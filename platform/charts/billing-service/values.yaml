@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: acrhealthsyncdev.azurecr.io/billing-service
   pullPolicy: IfNotPresent
-  tag: "fcf9f31"
+  tag: "de26847"
 
 serviceAccount:
   create: true
