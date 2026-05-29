@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: acrhealthsyncdev.azurecr.io/frontend
   pullPolicy: IfNotPresent
-  tag: "latest"
+  tag: "1241d22"
 
 service:
   type: ClusterIP
