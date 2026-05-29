@@ -5,6 +5,7 @@ on:
     paths:
       - 'services/ai-insights-service/**'
       - 'platform/charts/ai-insights-service/**'
+      - '.github/workflows/ai-insights-service-ci.yml'
     branches:
       - main
       - feature/phase1-core-infra
