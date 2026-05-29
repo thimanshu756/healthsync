@@ -1,0 +1,91 @@
+name: AI Insights Service CI
+
+on:
+  push:
+    paths:
+      - 'services/ai-insights-service/**'
+      - 'platform/charts/ai-insights-service/**'
+    branches:
+      - main
+      - feature/phase1-core-infra
+
+env:
+  ACR_NAME: acrhealthsyncdev
+  IMAGE_NAME: ai-insights-service
+  CHART_PATH: platform/charts/ai-insights-service
+  SERVICE_PATH: services/ai-insights-service
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install Dependencies
+        working-directory: ${{ env.SERVICE_PATH }}
+        run: |
+          pip install -r requirements-test.txt
+
+      - name: Run Tests
+        working-directory: ${{ env.SERVICE_PATH }}
+        run: |
+          PYTHONPATH=src pytest tests/
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to Azure Container Registry
+        run: |
+          az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Set Image Tag
+        id: set_tag
+        run: |
+          TAG=$(git rev-parse --short HEAD)
+          echo "TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Build Docker Image
+        working-directory: ${{ env.SERVICE_PATH }}
+        run: |
+          docker build -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ env.TAG }} .
+
+      - name: Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ env.TAG }}'
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Push Image to ACR
+        run: |
+          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ env.TAG }}
+
+      - name: Update Helm Chart Values
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          
+          sed -i "s/tag: .*/tag: \"${{ env.TAG }}\"/" ${{ env.CHART_PATH }}/values.yaml
+          
+          git add ${{ env.CHART_PATH }}/values.yaml
+          git commit -m "ci: Update ${{ env.IMAGE_NAME }} image tag to ${{ env.TAG }}" || echo "No changes to commit"
+          git push origin HEAD:${GITHUB_REF#refs/heads/}

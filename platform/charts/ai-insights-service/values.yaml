@@ -1,0 +1,32 @@
+replicaCount: 1
+
+image:
+  repository: acrhealthsyncdev.azurecr.io/ai-insights-service
+  pullPolicy: IfNotPresent
+  tag: "e7b6241"
+
+serviceAccount:
+  create: true
+  annotations:
+    azure.workload.identity/client-id: "a0850439-e679-4c31-8045-c2ce3b9803be"
+  name: "ai-insights-service-sa"
+
+podAnnotations: {}
+podLabels:
+  azure.workload.identity/use: "true"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+service:
+  type: ClusterIP
+  port: 80
+
+keyvault:
+  name: "kv-hsync-r4lanj"
+  tenantId: "ecd8c5a8-1729-4bc9-8fa7-78a7ce2919b8"
