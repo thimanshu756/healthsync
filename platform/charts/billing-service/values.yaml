@@ -23,6 +23,10 @@ resources:
     cpu: 200m
     memory: 256Mi
 
+service:
+  type: ClusterIP
+  port: 80
+
 keyvault:
   name: "kv-hsync-r4lanj"
   tenantId: "ecd8c5a8-1729-4bc9-8fa7-78a7ce2919b8"
