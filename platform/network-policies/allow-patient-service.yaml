@@ -1,0 +1,38 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-patient-service
+  namespace: app-patient-service
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: patient-service
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 80
+  egress:
+  # Allow DNS resolution
+  - ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # Allow Azure SQL (1433)
+  - ports:
+    - protocol: TCP
+      port: 1433
+  # Allow Service Bus (5671, 443)
+  - ports:
+    - protocol: TCP
+      port: 5671
+    - protocol: TCP
+      port: 443

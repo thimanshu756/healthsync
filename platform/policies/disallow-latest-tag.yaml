@@ -1,0 +1,35 @@
+---
+# Policy 3: Disallow latest tag
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/title: Disallow Latest Tag
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: low
+    policies.kyverno.io/description: >-
+      The ':latest' tag is mutable and can lead to unexpected errors if the
+      image changes. A specific version tag should be used.
+spec:
+  validationFailureAction: Audit
+  background: true
+  rules:
+    - name: require-image-tag
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces:
+                - "app-patient-service"
+                - "app-appointment-service"
+                - "app-billing-service"
+                - "app-notification-service"
+                - "app-ai-insights-service"
+      validate:
+        message: "Using the ':latest' tag is not allowed. Please specify a specific image version."
+        pattern:
+          spec:
+            containers:
+              - name: "*"
+                image: "!*:latest"

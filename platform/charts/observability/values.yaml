@@ -1,0 +1,182 @@
+# ── kube-prometheus-stack (Prometheus + Grafana + AlertManager + exporters) ──
+prometheus:
+  # AlertManager — minimal
+  alertmanager:
+    alertmanagerSpec:
+      resources:
+        requests:
+          cpu: 20m
+          memory: 50Mi
+        limits:
+          cpu: 100m
+          memory: 100Mi
+
+  # Prometheus — single replica with 5Gi retention
+  prometheus:
+    prometheusSpec:
+      retention: 5d
+      retentionSize: "4GB"
+      resources:
+        requests:
+          cpu: 100m
+          memory: 300Mi
+        limits:
+          cpu: 500m
+          memory: 600Mi
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: managed
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 6Gi
+      # Scrape all namespaces
+      serviceMonitorSelectorNilUsesHelmValues: false
+      podMonitorSelectorNilUsesHelmValues: false
+
+  # Grafana — with pre-provisioned data sources for Loki + Tempo
+  grafana:
+    adminPassword: "HealthSync@123"
+    resources:
+      requests:
+        cpu: 50m
+        memory: 100Mi
+      limits:
+        cpu: 200m
+        memory: 250Mi
+    persistence:
+      enabled: false
+    grafana.ini:
+      analytics:
+        check_for_updates: false
+    # Pre-provision Loki and Tempo data sources
+    additionalDataSources:
+      - name: Loki
+        type: loki
+        url: http://loki-gateway.observability.svc.cluster.local
+        access: proxy
+        isDefault: false
+        jsonData:
+          maxLines: 1000
+      - name: Tempo
+        type: tempo
+        url: http://tempo.observability.svc.cluster.local:3100
+        access: proxy
+        isDefault: false
+        jsonData:
+          httpMethod: GET
+          serviceMap:
+            datasourceUid: prometheus
+    # Pre-provision a HealthSync dashboard configmap
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+          - name: healthsync
+            orgId: 1
+            folder: "HealthSync AI"
+            type: file
+            disableDeletion: false
+            options:
+              path: /var/lib/grafana/dashboards/healthsync
+    dashboardsConfigMaps:
+      healthsync: "healthsync-dashboard"
+
+  # Prometheus node-exporter — scrape node metrics
+  prometheus-node-exporter:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        cpu: 50m
+        memory: 64Mi
+
+  # kube-state-metrics
+  kube-state-metrics:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        cpu: 50m
+        memory: 64Mi
+
+  # Disable heavy components we don't need
+  kubeEtcd:
+    enabled: false
+  kubeControllerManager:
+    enabled: false
+  kubeScheduler:
+    enabled: false
+
+# ── Loki (log aggregation) ──
+loki:
+  deploymentMode: SingleBinary
+  loki:
+    commonConfig:
+      replication_factor: 1
+    storage:
+      type: filesystem
+    auth_enabled: false
+  singleBinary:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 150Mi
+      limits:
+        cpu: 200m
+        memory: 300Mi
+    persistence:
+      enabled: true
+      storageClass: managed
+      size: 5Gi
+  # Disable gateway auth for dev simplicity
+  gateway:
+    enabled: true
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        cpu: 50m
+        memory: 64Mi
+  # Deploy Promtail as part of loki-stack
+  test:
+    enabled: false
+  lokiCanary:
+    enabled: false
+  monitoring:
+    selfMonitoring:
+      enabled: false
+      grafanaAgent:
+        installOperator: false
+    lokiCanary:
+      enabled: false
+
+# ── Tempo (distributed tracing) ──
+tempo:
+  tempo:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 100Mi
+      limits:
+        cpu: 200m
+        memory: 200Mi
+    ingester:
+      trace_idle_period: 10s
+      max_block_bytes: 100_000_000
+    storage:
+      trace:
+        backend: local
+        local:
+          path: /var/tempo/traces
+        wal:
+          path: /var/tempo/wal
+  persistence:
+    enabled: true
+    storageClassName: managed
+    size: 5Gi
