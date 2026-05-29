@@ -1,0 +1,34 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: notification-service-scaler
+  labels:
+    app.kubernetes.io/name: notification-service
+spec:
+  scaleTargetRef:
+    name: notification-service
+  minReplicaCount: 0
+  maxReplicaCount: 5
+  triggers:
+  - type: azure-servicebus
+    metadata:
+      queueName: notifications-email
+      messageCount: "5"
+    authenticationRef:
+      name: notification-service-auth
+  - type: azure-servicebus
+    metadata:
+      queueName: notifications-sms
+      messageCount: "5"
+    authenticationRef:
+      name: notification-service-auth
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: notification-service-auth
+spec:
+  secretTargetRef:
+  - parameter: connection
+    name: notification-secrets
+    key: SERVICEBUS_CONNECTION_STRING

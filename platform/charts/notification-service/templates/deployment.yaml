@@ -33,10 +33,6 @@ spec:
                 secretKeyRef:
                   name: notification-secrets
                   key: SERVICEBUS_CONNECTION_STRING
-            - name: SERVICEBUS_TOPIC_NAME
-              value: "domain-events"
-            - name: SERVICEBUS_SUBSCRIPTION_NAME
-              value: "notifications-sub"
           volumeMounts:
             - name: secrets-store01-inline
               mountPath: "/mnt/secrets-store"
