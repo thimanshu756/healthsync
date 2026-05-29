@@ -48,6 +48,10 @@ prometheus:
     persistence:
       enabled: false
     grafana.ini:
+      server:
+        domain: 4.187.191.230
+        root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana/"
+        serve_from_sub_path: true
       analytics:
         check_for_updates: false
     # Pre-provision Loki and Tempo data sources
