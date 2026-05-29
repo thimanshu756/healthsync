@@ -25,7 +25,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-11-01' = {
   }
   properties: {
     dnsPrefix: clusterName
-    kubernetesVersion: '1.30.3' // Stable release version
+    kubernetesVersion: '1.33.11' // Stable release version
     enableRBAC: true
     
     // Core Private Cluster security: blocks API server access from the public internet
@@ -37,15 +37,15 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-11-01' = {
       {
         name: 'systempool'
         count: 1
-        vmSize: 'Standard_B2s' // 2 vCPU, 4GB RAM (highly cost-conscious system host)
+        vmSize: 'Standard_D2s_v3' // 2 vCPU, 4GB RAM (highly cost-conscious system host)
         osType: 'Linux'
         mode: 'System'
         vnetSubnetID: systemSubnetId
       }
       {
         name: 'apppool'
-        count: 2
-        vmSize: 'Standard_B2s' // 2 vCPU, 4GB RAM (app host)
+        count: 1
+        vmSize: 'Standard_D2s_v3' // 2 vCPU, 4GB RAM (app host)
         osType: 'Linux'
         mode: 'User'
         vnetSubnetID: workloadSubnetId
@@ -64,6 +64,17 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-11-01' = {
     // Identity Federation: Enables OIDC Token exchange for Workload Identities
     oidcIssuerProfile: {
       enabled: true
+    }
+    
+    // Addons
+    addonProfiles: {
+      azureKeyvaultSecretsProvider: {
+        enabled: true
+        config: {
+          enableSecretRotation: 'true'
+          rotationPollInterval: '2m'
+        }
+      }
     }
     securityProfile: {
       workloadIdentity: {
