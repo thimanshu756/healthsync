@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: patient-service
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/rakriai/Azure-learn.git'
+    targetRevision: HEAD
+    path: platform/charts/patient-service
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: app-patient-service
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

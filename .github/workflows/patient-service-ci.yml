@@ -1,0 +1,81 @@
+name: Patient Service CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/*'
+    paths:
+      - 'services/patient-service/**'
+      - 'platform/charts/patient-service/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'services/patient-service/**'
+      - 'platform/charts/patient-service/**'
+
+permissions:
+  id-token: write
+  contents: write
+
+env:
+  ACR_NAME: "acrhealthsyncdev"
+  IMAGE_NAME: "patient-service"
+  CHART_DIR: "platform/charts/patient-service"
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to Azure Container Registry
+        run: |
+          az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Set Image Tag
+        id: vars
+        run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Build Docker Image
+        working-directory: services/patient-service
+        run: |
+          docker build -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} .
+          docker tag ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
+
+      - name: Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}'
+          format: 'table'
+          exit-code: '0' # Set to 1 to break the build on high/critical vulnerabilities
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Push Image to ACR
+        if: github.event_name == 'push'
+        run: |
+          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
+
+      - name: Update Helm Chart Values
+        if: github.event_name == 'push'
+        run: |
+          sed -i "s/^  tag: .*/  tag: \"${{ env.IMAGE_TAG }}\"/" ${{ env.CHART_DIR }}/values.yaml
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ${{ env.CHART_DIR }}/values.yaml
+          git commit -m "ci: Update patient-service image tag to ${{ env.IMAGE_TAG }} [skip ci]" || echo "No changes to commit"
+          git push
