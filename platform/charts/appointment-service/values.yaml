@@ -4,7 +4,7 @@ image:
   repository: acrhealthsyncdev.azurecr.io/appointment-service
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "9dce8c6"
+  tag: "956edaa"
 
 serviceAccount:
   create: true
