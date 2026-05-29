@@ -1,0 +1,60 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: seed-patient-script
+  namespace: app-patient-service
+data:
+  seed.sql: |
+    IF NOT EXISTS (SELECT * FROM dbo.Patients WHERE Id = 1)
+    BEGIN
+        SET IDENTITY_INSERT dbo.Patients ON;
+        INSERT INTO dbo.Patients (Id, FirstName, LastName, Email, Phone, DateOfBirth)
+        VALUES (1, 'John', 'Doe', 'john@example.com', '1234567890', '1990-01-01');
+        SET IDENTITY_INSERT dbo.Patients OFF;
+    END
+    GO
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-patient-job
+  namespace: app-patient-service
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: patient-service-sa
+      restartPolicy: Never
+      containers:
+      - name: sqlcmd
+        image: mcr.microsoft.com/mssql-tools
+        command:
+        - /bin/bash
+        - -c
+        - |
+          CS=$(cat /mnt/secrets-store/db-connection-string)
+          SERVER=$(echo "$CS" | grep -oP 'Server=tcp:\K[^,;]*')
+          USER=$(echo "$CS" | grep -oP 'User ID=\K[^;]*')
+          PASS=$(echo "$CS" | grep -oP 'Password=\K[^;]*')
+          DB=$(echo "$CS" | grep -oP 'Database=\K[^;]*')
+          
+          /opt/mssql-tools/bin/sqlcmd -S "$SERVER" -U "$USER" -P "$PASS" -d "$DB" -i /scripts/seed.sql
+        volumeMounts:
+        - name: secrets-store01-inline
+          mountPath: "/mnt/secrets-store"
+          readOnly: true
+        - name: script-volume
+          mountPath: "/scripts"
+      volumes:
+      - name: secrets-store01-inline
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "patient-service-spc"
+      - name: script-volume
+        configMap:
+          name: seed-patient-script

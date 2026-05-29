@@ -1,0 +1,28 @@
+replicaCount: 1
+
+image:
+  repository: acrhealthsyncdev.azurecr.io/billing-service
+  pullPolicy: IfNotPresent
+  tag: "fcf9f31"
+
+serviceAccount:
+  create: true
+  annotations:
+    azure.workload.identity/client-id: "73ff89d6-4cff-4e2c-b81b-be61ad6ce4fe"
+  name: "billing-service-sa"
+
+podAnnotations: {}
+podLabels:
+  azure.workload.identity/use: "true"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+keyvault:
+  name: "kv-hsync-r4lanj"
+  tenantId: "ecd8c5a8-1729-4bc9-8fa7-78a7ce2919b8"
