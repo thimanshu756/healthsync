@@ -75,20 +75,16 @@ resource aks 'Microsoft.ContainerService/managedClusters@2023-11-01' = {
           rotationPollInterval: '2m'
         }
       }
-    }
-    securityProfile: {
-      workloadIdentity: {
-        enabled: true
-      }
-    }
-    
-    // Container Insights Log Analytics Integration
-    addonProfiles: {
       omsagent: {
         enabled: true
         config: {
           logAnalyticsWorkspaceResourceID: workspaceId
         }
+      }
+    }
+    securityProfile: {
+      workloadIdentity: {
+        enabled: true
       }
     }
   }

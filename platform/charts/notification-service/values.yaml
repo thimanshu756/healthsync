@@ -1,0 +1,28 @@
+replicaCount: 1
+
+image:
+  repository: acrhealthsyncdev.azurecr.io/notification-service
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+serviceAccount:
+  create: true
+  annotations:
+    azure.workload.identity/client-id: "72b72dda-8f92-489e-96f7-f990efab2a40"
+  name: "notification-service-sa"
+
+podAnnotations: {}
+podLabels:
+  azure.workload.identity/use: "true"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+keyvault:
+  name: "kv-hsync-r4lanj"
+  tenantId: "ecd8c5a8-1729-4bc9-8fa7-78a7ce2919b8"

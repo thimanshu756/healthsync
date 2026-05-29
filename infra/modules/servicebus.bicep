@@ -41,6 +41,11 @@ resource billingSub 'Microsoft.ServiceBus/namespaces/topics/subscriptions@2022-1
   name: 'billing-sub'
 }
 
+resource notificationsSub 'Microsoft.ServiceBus/namespaces/topics/subscriptions@2022-10-01-preview' = {
+  parent: domainEventsTopic
+  name: 'notifications-sub'
+}
+
 resource analyticsSub 'Microsoft.ServiceBus/namespaces/topics/subscriptions@2022-10-01-preview' = {
   parent: domainEventsTopic
   name: 'analytics-sub'
