@@ -1,0 +1,35 @@
+replicaCount: 1
+
+image:
+  repository: acrhealthsyncdev.azurecr.io/appointment-service
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+serviceAccount:
+  create: true
+  annotations:
+    # Workload identity annotation. Will be replaced by CI/CD if needed.
+    azure.workload.identity/client-id: "db201fba-bf90-41f6-b7ed-415c5ed374f7"
+  name: "appointment-service-sa"
+
+podAnnotations: {}
+podLabels:
+  azure.workload.identity/use: "true"
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+keyvault:
+  name: "kv-healthsync-dev" # This needs to match the actual KV name, but wait, the bicep uses random string!
+  # I'll let CI update this or rely on a hardcoded value if I know it. Wait, the previous chart had `kv-hsync-r4lanj`.
+  tenantId: "ecd8c5a8-1729-4bc9-8fa7-78a7ce2919b8"
