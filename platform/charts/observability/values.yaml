@@ -115,6 +115,7 @@ prometheus:
 loki:
   deploymentMode: SingleBinary
   loki:
+    useTestSchema: true
     commonConfig:
       replication_factor: 1
     storage:
