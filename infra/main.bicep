@@ -14,6 +14,8 @@ param location string = 'centralindia'
 @description('The administrator password for the Azure SQL Server.')
 param sqlAdminPassword string
 
+var uniqueVaultName = 'kv-hsync-${take(uniqueString(subscription().subscriptionId, environmentName), 6)}'
+
 // 1. Instantiate the standard tagging module
 module tags './modules/tags.bicep' = {
   name: 'standard-tags'
@@ -108,7 +110,7 @@ module keyvault './modules/keyvault.bicep' = {
     rgPlatform
   ]
   params: {
-    vaultName: 'kv-healthsync-${environmentName}'
+    vaultName: uniqueVaultName
     location: location
     tags: tags.outputs.resourceTags
     subnetId: network.outputs.peSubnetId
@@ -154,9 +156,10 @@ module sqlSecret './modules/keyvault-secret.bicep' = {
   scope: resourceGroup('rg-healthsync-platform-${environmentName}')
   dependsOn: [
     rgPlatform
+    keyvault
   ]
   params: {
-    vaultName: 'kv-healthsync-${environmentName}'
+    vaultName: uniqueVaultName
     secretName: 'db-connection-string'
     secretValue: 'Server=tcp:${sql.outputs.sqlServerFqdn},1433;Database=${sql.outputs.sqlDbName};User ID=sqladmin;Password=${sqlAdminPassword};'
   }
@@ -168,9 +171,10 @@ module sbSecret './modules/keyvault-secret.bicep' = {
   scope: resourceGroup('rg-healthsync-platform-${environmentName}')
   dependsOn: [
     rgPlatform
+    keyvault
   ]
   params: {
-    vaultName: 'kv-healthsync-${environmentName}'
+    vaultName: uniqueVaultName
     secretName: 'servicebus-connection-string'
     secretValue: servicebus.outputs.sbConnectionString
   }

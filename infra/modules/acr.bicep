@@ -16,7 +16,7 @@ resource acr 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
 }
 
 // AcrPull role definition ID
-var acrPullRoleId = '7f951dda-40cb-475a-b947-9c1c546e80c5'
+var acrPullRoleId = '7f951dda-4ed3-4680-a7ca-43fe172d538d'
 
 resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(aksPrincipalId)) {
   name: guid(acr.id, aksPrincipalId, acrPullRoleId)

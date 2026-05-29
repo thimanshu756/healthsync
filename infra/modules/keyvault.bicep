@@ -68,7 +68,8 @@ resource dbSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   parent: kv
   name: 'db-connection-string'
   properties: {
-    value: 'Server=tcp:sql-healthsync-dev.${environment().suffixes.sqlServerHostname},1433;Database=healthsync-dev;User ID=dummy;Password=dummy;'
+    #disable-next-line no-hardcoded-env-urls
+    value: 'Server=tcp:sql-healthsync-dev.database.windows.net,1433;Database=healthsync-dev;User ID=dummy;Password=dummy;'
   }
 }
 

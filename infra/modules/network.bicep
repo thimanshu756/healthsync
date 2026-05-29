@@ -103,7 +103,8 @@ resource dnsKeyVault 'Microsoft.Network/privateDnsZones@2020-06-01' = {
 }
 
 resource dnsSQL 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-  name: 'privatelink.${environment().suffixes.sqlServerHostname}'
+  #disable-next-line no-hardcoded-env-urls
+  name: 'privatelink.database.windows.net'
   location: 'global'
   tags: tags
 }

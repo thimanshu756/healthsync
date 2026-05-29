@@ -1,0 +1,7 @@
+{
+  "name": "healthsync-github-feature",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "subject": "repo:thimanshu756/healthsync:ref:refs/heads/feature/phase1-core-infra",
+  "description": "GitHub Actions feature branch",
+  "audiences": ["api://AzureADTokenExchange"]
+}

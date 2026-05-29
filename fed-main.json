@@ -1,0 +1,7 @@
+{
+  "name": "healthsync-github-main",
+  "issuer": "https://token.actions.githubusercontent.com",
+  "subject": "repo:thimanshu756/healthsync:ref:refs/heads/main",
+  "description": "GitHub Actions main branch",
+  "audiences": ["api://AzureADTokenExchange"]
+}
