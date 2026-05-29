@@ -41,7 +41,7 @@ jobs:
       - name: Run Tests
         working-directory: ${{ env.SERVICE_PATH }}
         run: |
-          PYTHONPATH=src pytest tests/
+          PYTHONPATH=. pytest tests/
 
       - name: Azure Login
         uses: azure/login@v2
