@@ -12,6 +12,7 @@ COPY src/ ./src/
 
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
+ENV PATH=/home/appuser/.local/bin:$PATH
 
 EXPOSE 8080
 
