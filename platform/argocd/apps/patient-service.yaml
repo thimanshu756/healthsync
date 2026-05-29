@@ -6,8 +6,8 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/rakriai/Azure-learn.git'
-    targetRevision: HEAD
+    repoURL: 'https://github.com/thimanshu756/healthsync.git'
+    targetRevision: feature/phase1-core-infra
     path: platform/charts/patient-service
   destination:
     server: 'https://kubernetes.default.svc'
