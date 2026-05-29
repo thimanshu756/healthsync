@@ -22,11 +22,11 @@ async def test_process_message(capsys):
 
 @pytest.mark.asyncio
 @patch('src.main.ServiceBusClient')
-async def test_listen_for_events_no_connection_string(mock_sb_client, capsys):
+async def test_main_no_connection_string(mock_sb_client, capsys):
     # Set connection string to None
     main.CONNECTION_STR = None
     
-    await main.listen_for_events()
+    await main.main()
     
     captured = capsys.readouterr()
     assert "SERVICEBUS_CONNECTION_STRING not set. Exiting." in captured.out
