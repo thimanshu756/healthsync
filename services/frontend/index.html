@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HealthSync AI — Clinical Operations Dashboard</title>
+  <meta name="description" content="HealthSync AI clinical dashboard for managing patients, appointments, and real-time platform events on Azure Kubernetes Service." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-base:      #0a0e1a;
+      --bg-panel:     #0f1628;
+      --bg-glass:     rgba(255,255,255,0.04);
+      --bg-glass-hover: rgba(255,255,255,0.07);
+      --border:       rgba(255,255,255,0.08);
+      --border-accent: rgba(99,179,237,0.35);
+      --text-primary: #e8f0fe;
+      --text-secondary: #8899bb;
+      --text-muted:   #4a5568;
+      --accent-blue:  #63b3ed;
+      --accent-purple: #9f7aea;
+      --accent-green: #68d391;
+      --accent-orange: #f6ad55;
+      --accent-red:   #fc8181;
+      --gradient-1:   linear-gradient(135deg, #63b3ed 0%, #9f7aea 100%);
+      --gradient-2:   linear-gradient(135deg, #68d391 0%, #63b3ed 100%);
+      --gradient-3:   linear-gradient(135deg, #f6ad55 0%, #fc8181 100%);
+      --glow-blue:    0 0 20px rgba(99,179,237,0.25);
+      --radius:       12px;
+      --radius-lg:    18px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 10%, rgba(99,179,237,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(159,122,234,0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px;
+      height: 60px;
+      background: rgba(10,14,26,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--gradient-1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .logo-text { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+    .logo-text span { background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .status-badge {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 20px;
+      background: rgba(104,211,145,0.12); border: 1px solid rgba(104,211,145,0.3);
+      font-size: 12px; font-weight: 500; color: var(--accent-green);
+    }
+    .status-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--accent-green);
+      animation: pulse-green 2s infinite;
+    }
+    @keyframes pulse-green {
+      0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(104,211,145,0.4); }
+      50% { opacity: 0.8; box-shadow: 0 0 0 5px rgba(104,211,145,0); }
+    }
+    .env-badge {
+      padding: 4px 10px; border-radius: 6px;
+      background: rgba(246,173,85,0.12); border: 1px solid rgba(246,173,85,0.3);
+      font-size: 11px; font-weight: 600; color: var(--accent-orange);
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+
+    /* ── Layout ── */
+    .container { max-width: 1280px; margin: 0 auto; padding: 28px 28px; }
+
+    /* ── Stat cards ── */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px; margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--bg-glass); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 22px;
+      transition: border-color .2s, background .2s, transform .2s;
+      cursor: default;
+    }
+    .stat-card:hover { background: var(--bg-glass-hover); border-color: var(--border-accent); transform: translateY(-2px); }
+    .stat-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+    .stat-value { font-size: 32px; font-weight: 700; line-height: 1; }
+    .stat-value.blue   { background: var(--gradient-1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .stat-value.green  { color: var(--accent-green); }
+    .stat-value.orange { color: var(--accent-orange); }
+    .stat-value.purple { color: var(--accent-purple); }
+    .stat-sub { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
+    /* ── Tab nav ── */
+    .tab-nav {
+      display: flex; gap: 4px; margin-bottom: 22px;
+      background: var(--bg-glass); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 5px;
+      width: fit-content;
+    }
+    .tab-btn {
+      padding: 8px 20px; border-radius: 8px; border: none;
+      background: transparent; color: var(--text-secondary);
+      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all .2s;
+    }
+    .tab-btn:hover { color: var(--text-primary); background: var(--bg-glass-hover); }
+    .tab-btn.active { background: var(--gradient-1); color: #fff; box-shadow: var(--glow-blue); }
+
+    /* ── Panel grid ── */
+    .panel-grid { display: grid; grid-template-columns: 380px 1fr; gap: 20px; }
+    @media (max-width: 900px) { .panel-grid { grid-template-columns: 1fr; } }
+
+    /* ── Glass panel ── */
+    .panel {
+      background: var(--bg-glass); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 24px; overflow: hidden;
+    }
+    .panel-title {
+      font-size: 14px; font-weight: 600; color: var(--text-primary);
+      margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+    }
+    .panel-title .icon {
+      width: 28px; height: 28px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; font-size: 14px;
+    }
+    .icon-blue   { background: rgba(99,179,237,0.15); }
+    .icon-green  { background: rgba(104,211,145,0.15); }
+    .icon-purple { background: rgba(159,122,234,0.15); }
+
+    /* ── Form ── */
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+    input, select {
+      width: 100%; padding: 10px 13px; border-radius: 8px;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      color: var(--text-primary); font-family: 'Inter', sans-serif; font-size: 13px;
+      transition: border-color .2s, box-shadow .2s; outline: none;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(99,179,237,0.15);
+    }
+    input::placeholder { color: var(--text-muted); }
+    select option { background: var(--bg-panel); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .btn {
+      width: 100%; padding: 11px; border-radius: 9px; border: none;
+      background: var(--gradient-1); color: #fff;
+      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: opacity .2s, transform .15s, box-shadow .2s;
+      box-shadow: var(--glow-blue); margin-top: 4px;
+    }
+    .btn:hover   { opacity: 0.9; transform: translateY(-1px); }
+    .btn:active  { transform: translateY(0); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn.green { background: var(--gradient-2); box-shadow: 0 0 18px rgba(104,211,145,0.2); }
+
+    /* ── Data list ── */
+    .data-list { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; }
+    .data-list::-webkit-scrollbar { width: 4px; }
+    .data-list::-webkit-scrollbar-track { background: transparent; }
+    .data-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .data-item {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 16px;
+      display: flex; align-items: flex-start; gap: 12px;
+      transition: background .15s, border-color .15s;
+      animation: slideIn .25s ease;
+    }
+    @keyframes slideIn { from { opacity:0; transform: translateY(-6px); } to { opacity:1; transform:none; } }
+    .data-item:hover { background: var(--bg-glass-hover); border-color: var(--border-accent); }
+    .data-avatar {
+      width: 36px; height: 36px; min-width: 36px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 700;
+    }
+    .avatar-blue   { background: rgba(99,179,237,0.18); color: var(--accent-blue); }
+    .avatar-green  { background: rgba(104,211,145,0.18); color: var(--accent-green); }
+    .data-info { flex: 1; min-width: 0; }
+    .data-name { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .data-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .data-id   { font-size: 11px; color: var(--text-muted); margin-top: 1px; font-family: monospace; }
+    .badge {
+      padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-scheduled { background: rgba(99,179,237,0.15); color: var(--accent-blue); }
+    .badge-completed { background: rgba(104,211,145,0.15); color: var(--accent-green); }
+    .badge-cancelled { background: rgba(252,129,129,0.15); color: var(--accent-red); }
+
+    .empty-state {
+      text-align: center; padding: 40px 20px; color: var(--text-muted);
+      font-size: 13px;
+    }
+    .empty-state .emoji { font-size: 32px; margin-bottom: 10px; }
+
+    /* ── Event log ── */
+    .event-log {
+      max-height: 300px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .event-log::-webkit-scrollbar { width: 3px; }
+    .event-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .log-entry {
+      display: flex; gap: 10px; align-items: flex-start;
+      font-size: 12px; padding: 8px 10px; border-radius: 7px;
+      background: rgba(255,255,255,0.02); animation: slideIn .2s ease;
+    }
+    .log-time { color: var(--text-muted); white-space: nowrap; font-family: monospace; }
+    .log-msg  { color: var(--text-secondary); flex: 1; }
+    .log-msg.success { color: var(--accent-green); }
+    .log-msg.error   { color: var(--accent-red); }
+    .log-msg.info    { color: var(--accent-blue); }
+
+    /* ── Microservice status strip ── */
+    .svc-strip {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px;
+    }
+    .svc-chip {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 8px;
+      background: var(--bg-glass); border: 1px solid var(--border);
+      font-size: 12px; font-weight: 500; color: var(--text-secondary);
+    }
+    .svc-chip .dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--accent-green);
+    }
+
+    /* Hidden tab content */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
+      border-top-color: #fff; animation: spin .6s linear infinite;
+      vertical-align: middle; margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px; z-index: 999;
+      padding: 12px 18px; border-radius: 10px;
+      font-size: 13px; font-weight: 500;
+      transform: translateY(80px); opacity: 0;
+      transition: all .3s cubic-bezier(.22,1,.36,1);
+      max-width: 320px;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { background: rgba(104,211,145,0.15); border: 1px solid rgba(104,211,145,0.4); color: var(--accent-green); }
+    #toast.error   { background: rgba(252,129,129,0.15); border: 1px solid rgba(252,129,129,0.4); color: var(--accent-red); }
+  </style>
+</head>
+<body>
+
+<!-- ── Topbar ── -->
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-icon">🏥</div>
+    <div class="logo-text"><span>HealthSync AI</span></div>
+  </div>
+  <div class="topbar-right">
+    <div class="status-badge"><div class="status-dot"></div>All Systems Operational</div>
+    <div class="env-badge">DEV</div>
+  </div>
+</header>
+
+<!-- ── Main ── -->
+<main class="container">
+
+  <!-- Microservice status -->
+  <div class="svc-strip">
+    <div class="svc-chip"><div class="dot"></div>patient-service</div>
+    <div class="svc-chip"><div class="dot"></div>appointment-service</div>
+    <div class="svc-chip"><div class="dot"></div>billing-service</div>
+    <div class="svc-chip"><div class="dot"></div>notification-worker (KEDA)</div>
+    <div class="svc-chip"><div class="dot"></div>ai-insights-service</div>
+    <div class="svc-chip"><div class="dot"></div>NGINX Ingress</div>
+    <div class="svc-chip"><div class="dot"></div>ArgoCD (GitOps)</div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total Patients</div>
+      <div class="stat-value blue" id="stat-patients">—</div>
+      <div class="stat-sub">Registered records</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Appointments</div>
+      <div class="stat-value green" id="stat-appointments">—</div>
+      <div class="stat-sub">Total scheduled</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Events Published</div>
+      <div class="stat-value orange" id="stat-events">0</div>
+      <div class="stat-sub">Service Bus messages</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Platform</div>
+      <div class="stat-value purple">AKS</div>
+      <div class="stat-sub">Azure Kubernetes Service</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tab-nav">
+    <button class="tab-btn active" id="tab-patients-btn"   onclick="switchTab('patients')">👤 Patients</button>
+    <button class="tab-btn"        id="tab-appts-btn"       onclick="switchTab('appointments')">📅 Appointments</button>
+    <button class="tab-btn"        id="tab-eventlog-btn"    onclick="switchTab('eventlog')">📡 Event Log</button>
+  </div>
+
+  <!-- ───── PATIENTS TAB ───── -->
+  <div class="tab-content active" id="tab-patients">
+    <div class="panel-grid">
+      <!-- Create form -->
+      <div class="panel">
+        <div class="panel-title">
+          <div class="icon icon-blue">➕</div>
+          Register Patient
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="p-first">First Name *</label>
+            <input id="p-first" type="text" placeholder="e.g. Jane" />
+          </div>
+          <div class="form-group">
+            <label for="p-last">Last Name *</label>
+            <input id="p-last" type="text" placeholder="e.g. Doe" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="p-email">Email *</label>
+          <input id="p-email" type="email" placeholder="jane@clinic.com" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="p-phone">Phone</label>
+            <input id="p-phone" type="text" placeholder="+1 555 0100" />
+          </div>
+          <div class="form-group">
+            <label for="p-dob">Date of Birth *</label>
+            <input id="p-dob" type="date" />
+          </div>
+        </div>
+        <button class="btn" id="btn-create-patient" onclick="createPatient()">Register Patient</button>
+      </div>
+
+      <!-- Patient list -->
+      <div class="panel">
+        <div class="panel-title">
+          <div class="icon icon-blue">👥</div>
+          Patient Registry
+          <button style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--text-secondary);font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer;" onclick="loadPatients()">↻ Refresh</button>
+        </div>
+        <div class="data-list" id="patient-list">
+          <div class="empty-state"><div class="emoji">🔄</div>Loading patients…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── APPOINTMENTS TAB ───── -->
+  <div class="tab-content" id="tab-appointments">
+    <div class="panel-grid">
+      <!-- Create form -->
+      <div class="panel">
+        <div class="panel-title">
+          <div class="icon icon-green">📅</div>
+          Book Appointment
+        </div>
+        <div class="form-group">
+          <label for="a-patient">Patient ID *</label>
+          <input id="a-patient" type="number" placeholder="e.g. 1" min="1" />
+        </div>
+        <div class="form-group">
+          <label for="a-doctor">Doctor ID *</label>
+          <input id="a-doctor" type="number" placeholder="e.g. 101" min="1" />
+        </div>
+        <div class="form-group">
+          <label for="a-time">Appointment Date & Time *</label>
+          <input id="a-time" type="datetime-local" />
+        </div>
+        <div class="form-group">
+          <label for="a-notes">Clinical Notes</label>
+          <input id="a-notes" type="text" placeholder="e.g. Annual check-up" />
+        </div>
+        <button class="btn green" id="btn-create-appt" onclick="createAppointment()">Book Appointment</button>
+      </div>
+
+      <!-- Appointment list -->
+      <div class="panel">
+        <div class="panel-title">
+          <div class="icon icon-green">📋</div>
+          Appointment Schedule
+          <button style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--text-secondary);font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer;" onclick="loadAppointments()">↻ Refresh</button>
+        </div>
+        <div class="data-list" id="appointment-list">
+          <div class="empty-state"><div class="emoji">🔄</div>Loading appointments…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── EVENT LOG TAB ───── -->
+  <div class="tab-content" id="tab-eventlog">
+    <div class="panel">
+      <div class="panel-title">
+        <div class="icon icon-purple">📡</div>
+        Live Event Log
+        <button style="margin-left:auto;background:none;border:1px solid var(--border);color:var(--text-secondary);font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer;" onclick="clearLog()">🗑 Clear</button>
+      </div>
+      <div class="event-log" id="event-log">
+        <div class="log-entry"><span class="log-time">--:--:--</span><span class="log-msg info">Dashboard initialised. Waiting for events…</span></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+  // ── Config ──
+  // In production, /api/* is routed by NGINX to the backend services.
+  // In local dev, you can set these to the direct service URLs.
+  const API = {
+    patients:     '/api/patients',
+    appointments: '/api/appointments',
+  };
+
+  let eventCount = 0;
+
+  // ── Utils ──
+  function now() {
+    return new Date().toLocaleTimeString('en-GB', { hour12: false });
+  }
+
+  function log(msg, type = 'info') {
+    const el = document.getElementById('event-log');
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    entry.innerHTML = `<span class="log-time">${now()}</span><span class="log-msg ${type}">${msg}</span>`;
+    el.prepend(entry);
+    if (el.children.length > 100) el.lastChild.remove();
+    eventCount++;
+    document.getElementById('stat-events').textContent = eventCount;
+  }
+
+  function toast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `show ${type}`;
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => { t.className = type; }, 3000);
+  }
+
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    btn.disabled = loading;
+    btn.innerHTML = loading
+      ? `<span class="spinner"></span> Working…`
+      : btn.dataset.label;
+  }
+
+  // ── Tab switching ──
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(`tab-${tab}`).classList.add('active');
+    document.getElementById(`tab-${tab}-btn`).classList.add('active');
+    if (tab === 'patients') loadPatients();
+    if (tab === 'appointments') loadAppointments();
+  }
+
+  function clearLog() {
+    document.getElementById('event-log').innerHTML =
+      '<div class="log-entry"><span class="log-time">--:--:--</span><span class="log-msg info">Log cleared.</span></div>';
+  }
+
+  // ── Patients ──
+  async function loadPatients() {
+    const list = document.getElementById('patient-list');
+    try {
+      log('GET /api/patients');
+      const res = await fetch(API.patients);
+      const data = await res.json();
+      document.getElementById('stat-patients').textContent = Array.isArray(data) ? data.length : '?';
+      if (!Array.isArray(data) || data.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="emoji">👤</div>No patients registered yet.</div>';
+        log('Response: 0 patients', 'info');
+        return;
+      }
+      list.innerHTML = '';
+      data.forEach(p => {
+        const initials = `${(p.FirstName||p.name||'?')[0]}${(p.LastName||'')[0]||''}`.toUpperCase();
+        const item = document.createElement('div');
+        item.className = 'data-item';
+        item.innerHTML = `
+          <div class="data-avatar avatar-blue">${initials}</div>
+          <div class="data-info">
+            <div class="data-name">${p.FirstName||''} ${p.LastName||p.name||''}</div>
+            <div class="data-meta">📧 ${p.Email||p.email||'—'}  📞 ${p.Phone||'—'}</div>
+            <div class="data-id">ID: ${p.Id||p.id||'—'} · DOB: ${p.DateOfBirth||p.date_of_birth||'—'}</div>
+          </div>`;
+        list.appendChild(item);
+      });
+      log(`Response: ${data.length} patients loaded`, 'success');
+    } catch (e) {
+      list.innerHTML = `<div class="empty-state"><div class="emoji">⚠️</div>Could not reach patient-service.<br><small>${e.message}</small></div>`;
+      log(`Error loading patients: ${e.message}`, 'error');
+    }
+  }
+
+  async function createPatient() {
+    const firstName   = document.getElementById('p-first').value.trim();
+    const lastName    = document.getElementById('p-last').value.trim();
+    const email       = document.getElementById('p-email').value.trim();
+    const phone       = document.getElementById('p-phone').value.trim();
+    const dateOfBirth = document.getElementById('p-dob').value;
+
+    if (!firstName || !lastName || !email || !dateOfBirth) {
+      toast('Please fill in all required fields.', 'error'); return;
+    }
+
+    const btn = document.getElementById('btn-create-patient');
+    btn.dataset.label = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Registering…';
+
+    const payload = { firstName, lastName, email, phone, dateOfBirth };
+    log(`POST /api/patients → ${JSON.stringify(payload)}`);
+
+    try {
+      const res = await fetch(API.patients, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        log(`✅ Patient created (ID: ${data.Id||'?'}) — PatientRegistered event published to Service Bus!`, 'success');
+        toast(`✅ Patient registered! ID: ${data.Id||'?'}`);
+        ['p-first','p-last','p-email','p-phone','p-dob'].forEach(id => document.getElementById(id).value = '');
+        await loadPatients();
+      } else {
+        log(`❌ ${res.status}: ${JSON.stringify(data)}`, 'error');
+        toast(`Error: ${data.error || res.statusText}`, 'error');
+      }
+    } catch (e) {
+      log(`❌ Network error: ${e.message}`, 'error');
+      toast(`Network error: ${e.message}`, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = btn.dataset.label || 'Register Patient';
+    }
+  }
+
+  // ── Appointments ──
+  async function loadAppointments() {
+    const list = document.getElementById('appointment-list');
+    try {
+      log('GET /api/appointments');
+      const res = await fetch(API.appointments);
+      const data = await res.json();
+      document.getElementById('stat-appointments').textContent = Array.isArray(data) ? data.length : '?';
+      if (!Array.isArray(data) || data.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="emoji">📅</div>No appointments scheduled yet.</div>';
+        log('Response: 0 appointments', 'info');
+        return;
+      }
+      list.innerHTML = '';
+      data.forEach(a => {
+        const statusClass = a.Status === 'Completed' ? 'badge-completed'
+                          : a.Status === 'Cancelled' ? 'badge-cancelled'
+                          : 'badge-scheduled';
+        const dt = a.AppointmentTime ? new Date(a.AppointmentTime).toLocaleString() : '—';
+        const item = document.createElement('div');
+        item.className = 'data-item';
+        item.innerHTML = `
+          <div class="data-avatar avatar-green">📅</div>
+          <div class="data-info">
+            <div class="data-name">Patient #${a.PatientId||a.patientId||'?'} → Dr. #${a.DoctorId||a.doctorId||'?'}</div>
+            <div class="data-meta">🕐 ${dt}</div>
+            <div class="data-id">${a.Notes||'No notes'}</div>
+          </div>
+          <span class="badge ${statusClass}">${a.Status||'Scheduled'}</span>`;
+        list.appendChild(item);
+      });
+      log(`Response: ${data.length} appointments loaded`, 'success');
+    } catch (e) {
+      list.innerHTML = `<div class="empty-state"><div class="emoji">⚠️</div>Could not reach appointment-service.<br><small>${e.message}</small></div>`;
+      log(`Error loading appointments: ${e.message}`, 'error');
+    }
+  }
+
+  async function createAppointment() {
+    const patientId      = document.getElementById('a-patient').value;
+    const doctorId       = document.getElementById('a-doctor').value;
+    const appointmentTime = document.getElementById('a-time').value;
+    const notes          = document.getElementById('a-notes').value.trim();
+
+    if (!patientId || !doctorId || !appointmentTime) {
+      toast('Please fill in all required fields.', 'error'); return;
+    }
+
+    const btn = document.getElementById('btn-create-appt');
+    btn.dataset.label = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Booking…';
+
+    const payload = {
+      patientId: parseInt(patientId),
+      doctorId:  parseInt(doctorId),
+      appointmentTime: new Date(appointmentTime).toISOString(),
+      notes,
+    };
+    log(`POST /api/appointments → ${JSON.stringify(payload)}`);
+
+    try {
+      const res = await fetch(API.appointments, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        log(`✅ Appointment booked (ID: ${data.Id||data.id||'?'}) — AppointmentCreated event published!`, 'success');
+        toast(`✅ Appointment booked!`);
+        ['a-patient','a-doctor','a-time','a-notes'].forEach(id => document.getElementById(id).value = '');
+        await loadAppointments();
+      } else {
+        log(`❌ ${res.status}: ${JSON.stringify(data)}`, 'error');
+        toast(`Error: ${data.error || res.statusText}`, 'error');
+      }
+    } catch (e) {
+      log(`❌ Network error: ${e.message}`, 'error');
+      toast(`Network error: ${e.message}`, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = btn.dataset.label || 'Book Appointment';
+    }
+  }
+
+  // ── Init ──
+  document.addEventListener('DOMContentLoaded', () => {
+    loadPatients();
+    log('HealthSync AI Dashboard initialised on Azure AKS', 'info');
+    log('NGINX Ingress → patient-service, appointment-service, notification-worker (KEDA)', 'info');
+  });
+</script>
+</body>
+</html>

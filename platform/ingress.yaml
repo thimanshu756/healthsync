@@ -1,0 +1,73 @@
+---
+# ExternalName services in ingress-nginx namespace to proxy to backend namespaces
+apiVersion: v1
+kind: Service
+metadata:
+  name: patient-service
+  namespace: ingress-nginx
+spec:
+  type: ExternalName
+  externalName: patient-service.app-patient-service.svc.cluster.local
+  ports:
+  - port: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: appointment-service
+  namespace: ingress-nginx
+spec:
+  type: ExternalName
+  externalName: appointment-service.app-appointment-service.svc.cluster.local
+  ports:
+  - port: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: ingress-nginx
+spec:
+  type: ExternalName
+  externalName: frontend.frontend.svc.cluster.local
+  ports:
+  - port: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: healthsync-ingress
+  namespace: ingress-nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Content-Type, Authorization"
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /api/patients(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: patient-service
+            port:
+              number: 80
+      - path: /api/appointments(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: appointment-service
+            port:
+              number: 80
+      - path: /()(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: frontend
+            port:
+              number: 80
