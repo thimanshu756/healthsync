@@ -30,6 +30,6 @@ resources:
     memory: 256Mi
 
 keyvault:
-  name: "kv-healthsync-dev" # This needs to match the actual KV name, but wait, the bicep uses random string!
+  name: "kv-hsync-r4lanj"
   # I'll let CI update this or rely on a hardcoded value if I know it. Wait, the previous chart had `kv-hsync-r4lanj`.
   tenantId: "ecd8c5a8-1729-4bc9-8fa7-78a7ce2919b8"
