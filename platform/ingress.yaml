@@ -39,7 +39,7 @@ metadata:
   name: healthsync-ingress
   namespace: ingress-nginx
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/rewrite-target: /$1$2
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-origin: "*"
@@ -50,21 +50,38 @@ spec:
   rules:
   - http:
       paths:
-      - path: /api/patients(/|$)(.*)
+      # /api/patients → patients service at /patients
+      - path: /api/(patients)(/.*)
         pathType: ImplementationSpecific
         backend:
           service:
             name: patient-service
             port:
               number: 80
-      - path: /api/appointments(/|$)(.*)
+      - path: /api/(patients)$
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: patient-service
+            port:
+              number: 80
+      # /api/appointments → appointment service at /appointments
+      - path: /api/(appointments)(/.*)
         pathType: ImplementationSpecific
         backend:
           service:
             name: appointment-service
             port:
               number: 80
-      - path: /()(.*)
+      - path: /api/(appointments)$
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: appointment-service
+            port:
+              number: 80
+      # Frontend catch-all
+      - path: /(.*)
         pathType: ImplementationSpecific
         backend:
           service:
