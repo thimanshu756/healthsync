@@ -66,13 +66,18 @@ public class BillingWorker : BackgroundService
             // Create Mock Invoice
             try
             {
+                using var doc = JsonDocument.Parse(body);
+                var root = doc.RootElement;
+                int appointmentId = root.GetProperty("Id").GetInt32();
+                int patientId = root.GetProperty("PatientId").GetInt32();
+                
                 var connString = _config["DB_CONNECTION_STRING"];
                 if (!string.IsNullOrEmpty(connString))
                 {
                     using var conn = new SqlConnection(connString);
                     await conn.ExecuteAsync(
-                        "INSERT INTO fin.Invoices (PatientId, Amount, Status) VALUES (@PatientId, @Amount, 'Unpaid')",
-                        new { PatientId = 1, Amount = 150.00m });
+                        "INSERT INTO fin.Invoices (PatientId, AppointmentId, Amount, Status, DueDate) VALUES (@PatientId, @AppointmentId, @Amount, 'Unpaid', @DueDate)",
+                        new { PatientId = patientId, AppointmentId = appointmentId, Amount = 150.00m, DueDate = DateTime.UtcNow.AddDays(30).Date });
                     _logger.LogInformation("Invoice created successfully.");
                 }
             }
