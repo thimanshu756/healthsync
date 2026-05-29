@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: acrhealthsyncdev.azurecr.io/ai-insights-service
   pullPolicy: IfNotPresent
-  tag: "4a1a337"
+  tag: "189fae9"
 
 serviceAccount:
   create: true
