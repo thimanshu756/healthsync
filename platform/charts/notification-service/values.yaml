@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: acrhealthsyncdev.azurecr.io/notification-service
   pullPolicy: IfNotPresent
-  tag: "a7b3ae4"
+  tag: "866f48c"
 
 serviceAccount:
   create: true
