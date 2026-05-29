@@ -19,7 +19,7 @@ data:
           "title": "Pod Count by Namespace",
           "type": "stat",
           "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
-          "targets": [{"expr": "count(kube_pod_info{namespace=~\"app-.*|frontend|ingress-nginx\"}) by (namespace)", "legendFormat": "{{namespace}}"}],
+          "targets": [{"expr": "count(kube_pod_info{namespace=~\"app-.*|frontend|ingress-nginx\"}) by (namespace)", "legendFormat": "{{ "{{" }}namespace{{ "}}" }}"}],
           "options": {"reduceOptions": {"calcs": ["lastNotNull"]}}
         },
         {
@@ -27,21 +27,21 @@ data:
           "title": "CPU Usage — App Pods",
           "type": "timeseries",
           "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
-          "targets": [{"expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"app-.*|frontend\",container!=\"\"}[5m])) by (namespace)", "legendFormat": "{{namespace}}"}]
+          "targets": [{"expr": "sum(rate(container_cpu_usage_seconds_total{namespace=~\"app-.*|frontend\",container!=\"\"}[5m])) by (namespace)", "legendFormat": "{{ "{{" }}namespace{{ "}}" }}"}]
         },
         {
           "id": 3,
           "title": "Memory Usage — App Pods",
           "type": "timeseries",
           "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
-          "targets": [{"expr": "sum(container_memory_working_set_bytes{namespace=~\"app-.*|frontend\",container!=\"\"}) by (namespace)", "legendFormat": "{{namespace}}"}]
+          "targets": [{"expr": "sum(container_memory_working_set_bytes{namespace=~\"app-.*|frontend\",container!=\"\"}) by (namespace)", "legendFormat": "{{ "{{" }}namespace{{ "}}" }}"}]
         },
         {
           "id": 4,
           "title": "HTTP Requests (NGINX Ingress)",
           "type": "timeseries",
           "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
-          "targets": [{"expr": "sum(rate(nginx_ingress_controller_requests[5m])) by (ingress,service)", "legendFormat": "{{service}}"}]
+          "targets": [{"expr": "sum(rate(nginx_ingress_controller_requests[5m])) by (ingress,service)", "legendFormat": "{{ "{{" }}service{{ "}}" }}"}]
         },
         {
           "id": 5,
@@ -55,7 +55,7 @@ data:
           "title": "Node CPU %",
           "type": "gauge",
           "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
-          "targets": [{"expr": "100 - (avg by(node) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)", "legendFormat": "{{node}}"}],
+          "targets": [{"expr": "100 - (avg by(node) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)", "legendFormat": "{{ "{{" }}node{{ "}}" }}"}],
           "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "orientation": "auto"}
         }
       ],
