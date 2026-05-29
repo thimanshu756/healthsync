@@ -134,7 +134,21 @@ module sql './modules/sql.bicep' = {
   }
 }
 
-// 10. Store the SQL connection string securely in the Key Vault inside the Platform RG
+// 10. Deploy Azure Service Bus inside the App Resource Group
+module servicebus './modules/servicebus.bicep' = {
+  name: 'servicebus-deployment'
+  scope: resourceGroup('rg-healthsync-app-${environmentName}')
+  dependsOn: [
+    rgApp
+  ]
+  params: {
+    sbNamespaceName: 'sb-healthsync-${environmentName}'
+    location: location
+    tags: tags.outputs.resourceTags
+  }
+}
+
+// 11. Store the SQL connection string securely in the Key Vault inside the Platform RG
 module sqlSecret './modules/keyvault-secret.bicep' = {
   name: 'sql-secret-deployment'
   scope: resourceGroup('rg-healthsync-platform-${environmentName}')
@@ -145,6 +159,20 @@ module sqlSecret './modules/keyvault-secret.bicep' = {
     vaultName: 'kv-healthsync-${environmentName}'
     secretName: 'db-connection-string'
     secretValue: 'Server=tcp:${sql.outputs.sqlServerFqdn},1433;Database=${sql.outputs.sqlDbName};User ID=sqladmin;Password=${sqlAdminPassword};'
+  }
+}
+
+// 12. Store the Service Bus connection string securely in the Key Vault inside the Platform RG
+module sbSecret './modules/keyvault-secret.bicep' = {
+  name: 'sb-secret-deployment'
+  scope: resourceGroup('rg-healthsync-platform-${environmentName}')
+  dependsOn: [
+    rgPlatform
+  ]
+  params: {
+    vaultName: 'kv-healthsync-${environmentName}'
+    secretName: 'servicebus-connection-string'
+    secretValue: servicebus.outputs.sbConnectionString
   }
 }
 
@@ -171,3 +199,5 @@ output aksOidcIssuerUrl string = aks.outputs.oidcIssuerUrl
 
 output sqlServerFqdn string = sql.outputs.sqlServerFqdn
 output sqlDbName string = sql.outputs.sqlDbName
+
+output sbNamespaceName string = servicebus.outputs.sbNamespaceName
