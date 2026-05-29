@@ -8,16 +8,7 @@ const logger = winston.createLogger({
   transports: [new winston.transports.Console()]
 });
 
-const sqlConfig = {
-  // If running locally, you might pass a full connection string via DB_CONNECTION_STRING
-  // In AKS, this will be mounted from KeyVault via Secrets Store CSI Driver
-  connectionString: process.env.DB_CONNECTION_STRING,
-  options: {
-    encrypt: true, // Azure SQL requires encryption
-    enableArithAbort: true,
-    trustServerCertificate: false
-  }
-};
+const sqlConfig = process.env.DB_CONNECTION_STRING;
 
 let poolPromise = null;
 
