@@ -13,7 +13,7 @@ serviceAccount:
   create: true
   annotations:
     # Workload identity annotation. Will be replaced by CI/CD if needed.
-    azure.workload.identity/client-id: ""
+    azure.workload.identity/client-id: "a137e829-3aa6-4aa8-80cb-a0c091cfe900"
   name: "patient-service-sa"
 
 podAnnotations: {}
