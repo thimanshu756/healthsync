@@ -49,6 +49,13 @@ spec:
                 secretKeyRef:
                   name: sql-secret
                   key: DB_CONNECTION_STRING
+            - name: SERVICEBUS_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: sql-secret
+                  key: SERVICEBUS_CONNECTION_STRING
+            - name: SERVICEBUS_TOPIC_NAME
+              value: "domain-events"
           volumeMounts:
             - name: secrets-store01-inline
               mountPath: "/mnt/secrets-store"

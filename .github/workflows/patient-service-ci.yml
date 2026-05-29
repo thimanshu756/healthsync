@@ -33,6 +33,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies & Run Tests
+        working-directory: services/patient-service
+        run: |
+          npm ci || npm install
+          npm test
+
       - name: Azure Login
         uses: azure/login@v2
         with:

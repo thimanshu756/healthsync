@@ -36,3 +36,4 @@ keyvault:
   name: kv-hsync-r4lanj
   tenantId: "ecd8c5a8-1729-4bc9-8fa7-78a7ce2919b8"
   sqlSecretName: db-connection-string
+  serviceBusSecretName: servicebus-connection-string
