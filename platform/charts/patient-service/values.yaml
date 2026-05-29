@@ -4,7 +4,7 @@ image:
   repository: acrhealthsyncdev.azurecr.io/patient-service
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "8086cad"
+  tag: "7b8272c"
 
 nameOverride: ""
 fullnameOverride: ""
