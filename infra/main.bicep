@@ -10,6 +10,10 @@ param environmentName string = 'dev'
 @description('The primary location for all deployed resource groups.')
 param location string = 'centralindia'
 
+@secure()
+@description('The administrator password for the Azure SQL Server.')
+param sqlAdminPassword string
+
 // 1. Instantiate the standard tagging module
 module tags './modules/tags.bicep' = {
   name: 'standard-tags'
@@ -92,7 +96,7 @@ module acr './modules/acr.bicep' = {
     acrName: 'acrhealthsync${environmentName}'
     location: location
     tags: tags.outputs.resourceTags
-    aksPrincipalId: aks.outputs.kubeletPrincipalId // Wire AKS identity for ACR pull permissions
+    aksPrincipalId: aks.outputs.kubeletPrincipalId
   }
 }
 
@@ -109,6 +113,38 @@ module keyvault './modules/keyvault.bicep' = {
     tags: tags.outputs.resourceTags
     subnetId: network.outputs.peSubnetId
     dnsZoneId: network.outputs.dnsZoneKeyVaultId
+  }
+}
+
+// 9. Deploy Azure SQL Server & Database inside the App Resource Group
+module sql './modules/sql.bicep' = {
+  name: 'sql-deployment'
+  scope: resourceGroup('rg-healthsync-app-${environmentName}')
+  dependsOn: [
+    rgApp
+  ]
+  params: {
+    sqlServerName: 'sql-healthsync-${environmentName}'
+    location: location
+    tags: tags.outputs.resourceTags
+    subnetId: network.outputs.peSubnetId
+    dnsZoneId: network.outputs.dnsZoneSqlId
+    administratorLogin: 'sqladmin'
+    administratorLoginPassword: sqlAdminPassword
+  }
+}
+
+// 10. Store the SQL connection string securely in the Key Vault inside the Platform RG
+module sqlSecret './modules/keyvault-secret.bicep' = {
+  name: 'sql-secret-deployment'
+  scope: resourceGroup('rg-healthsync-platform-${environmentName}')
+  dependsOn: [
+    rgPlatform
+  ]
+  params: {
+    vaultName: 'kv-healthsync-${environmentName}'
+    secretName: 'db-connection-string'
+    secretValue: 'Server=tcp:${sql.outputs.sqlServerFqdn},1433;Database=${sql.outputs.sqlDbName};User ID=sqladmin;Password=${sqlAdminPassword};'
   }
 }
 
@@ -132,3 +168,6 @@ output logAnalyticsWorkspaceCustomerId string = monitoring.outputs.workspaceCust
 output aksClusterId string = aks.outputs.clusterId
 output aksClusterName string = aks.outputs.clusterName
 output aksOidcIssuerUrl string = aks.outputs.oidcIssuerUrl
+
+output sqlServerFqdn string = sql.outputs.sqlServerFqdn
+output sqlDbName string = sql.outputs.sqlDbName
