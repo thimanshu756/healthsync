@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Users, Calendar, AlertCircle, TrendingUp, RefreshCw } from 'lucide-react';
+import ServiceHealthGrid from '../components/ServiceHealthGrid';
 
 const StatCard = ({ title, value, icon, trend, colorClass }) => (
   <div className="glass-card p-6 flex flex-col relative overflow-hidden group hover:-translate-y-1 transition-transform duration-300 cursor-pointer">
@@ -38,8 +39,8 @@ const Dashboard = () => {
         axios.get('/api/appointments').catch(e => ({ data: [] }))
       ]);
       
-      setPatients(patientsRes.data || []);
-      setAppointments(appointmentsRes.data || []);
+      setPatients(Array.isArray(patientsRes.data) ? patientsRes.data : []);
+      setAppointments(Array.isArray(appointmentsRes.data) ? appointmentsRes.data : []);
       setError(null);
     } catch (err) {
       console.error("Failed to fetch data", err);
@@ -77,6 +78,9 @@ const Dashboard = () => {
           <p>{error}</p>
         </div>
       )}
+
+      {/* Service Health Grid */}
+      <ServiceHealthGrid />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">

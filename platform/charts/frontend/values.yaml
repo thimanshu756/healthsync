@@ -5,7 +5,8 @@ image:
   pullPolicy: Always
   tag: "latest"
 
-imagePullSecrets: []
+imagePullSecrets:
+  - name: acr-secret
 nameOverride: ""
 fullnameOverride: ""
 
@@ -25,7 +26,14 @@ service:
   port: 80
 
 ingress:
-  enabled: false
+  enabled: true
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: ""
+      paths:
+        - path: /
+          pathType: Prefix
 
 resources:
   requests:

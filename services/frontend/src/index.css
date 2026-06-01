@@ -33,3 +33,154 @@ body {
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
   border-radius: 1rem;
 }
+
+/* ─── Service Health Cards ─────────────────────────────────────────── */
+
+.service-health-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.875rem;
+  padding: 1.25rem;
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.9) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.3s ease;
+}
+
+.service-health-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+}
+
+.service-health-card.healthy {
+  border-color: rgba(16, 185, 129, 0.18);
+}
+
+.service-health-card.degraded {
+  border-color: rgba(239, 68, 68, 0.18);
+}
+
+.service-health-card.loading {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Status badge pill */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.status-badge--healthy {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.status-badge--degraded {
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.status-badge--loading {
+  background-color: rgba(100, 116, 139, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+/* Animated status dot with pulse ring */
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.status-dot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+.status-dot--healthy {
+  background-color: #34d399;
+}
+
+.status-dot--healthy::after {
+  border: 1.5px solid rgba(52, 211, 153, 0.6);
+}
+
+.status-dot--degraded {
+  background-color: #f87171;
+}
+
+.status-dot--degraded::after {
+  border: 1.5px solid rgba(248, 113, 113, 0.6);
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(1); opacity: 1; }
+  70%  { transform: scale(1.8); opacity: 0; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+/* Shimmer skeleton for loading state */
+.shimmer-inline {
+  display: inline-block;
+  background: linear-gradient(90deg, rgba(51, 65, 85, 0.4) 25%, rgba(71, 85, 105, 0.6) 50%, rgba(51, 65, 85, 0.4) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.shimmer-text {
+  color: #475569;
+  animation: shimmer-text 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes shimmer-text {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
+}
+
+/* Poll progress bar — sweeps across in 10s */
+.poll-progress {
+  height: 100%;
+  border-radius: 9999px;
+  animation: poll-sweep 10s linear infinite;
+  transform-origin: left center;
+}
+
+.poll-progress--healthy {
+  background: linear-gradient(90deg, rgba(52, 211, 153, 0.8), rgba(52, 211, 153, 0.2));
+}
+
+.poll-progress--degraded {
+  background: linear-gradient(90deg, rgba(248, 113, 113, 0.8), rgba(248, 113, 113, 0.2));
+}
+
+@keyframes poll-sweep {
+  0%   { width: 0%; opacity: 1; }
+  90%  { width: 100%; opacity: 1; }
+  95%  { width: 100%; opacity: 0; }
+  100% { width: 0%; opacity: 0; }
+}
