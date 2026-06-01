@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: acrhealthsyncdev.azurecr.io/frontend
   pullPolicy: Always
-  tag: "latest"
+  tag: "2d2a440"
 
 imagePullSecrets:
   - name: acr-secret
