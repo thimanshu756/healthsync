@@ -36,11 +36,22 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: grafana
+  name: billing-service
   namespace: ingress-nginx
 spec:
   type: ExternalName
-  externalName: observability-grafana.observability.svc.cluster.local
+  externalName: billing-service.app-billing-service.svc.cluster.local
+  ports:
+  - port: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-insights-service
+  namespace: ingress-nginx
+spec:
+  type: ExternalName
+  externalName: ai-insights-service.app-ai-insights-service.svc.cluster.local
   ports:
   - port: 80
 ---
@@ -61,19 +72,34 @@ spec:
   rules:
   - http:
       paths:
-      # /grafana → grafana service at /grafana
-      - path: /(grafana)(/.*)
+      # /api/billing → billing service at /billing
+      - path: /api/(billing)(/.*)
         pathType: ImplementationSpecific
         backend:
           service:
-            name: grafana
+            name: billing-service
             port:
               number: 80
-      - path: /(grafana)$
+      - path: /api/(billing)$
         pathType: ImplementationSpecific
         backend:
           service:
-            name: grafana
+            name: billing-service
+            port:
+              number: 80
+      # /api/insights → ai-insights service at /insights
+      - path: /api/(insights)(/.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: ai-insights-service
+            port:
+              number: 80
+      - path: /api/(insights)$
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: ai-insights-service
             port:
               number: 80
       # /api/patients → patients service at /patients

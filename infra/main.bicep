@@ -14,6 +14,9 @@ param location string = 'centralindia'
 @description('The administrator password for the Azure SQL Server.')
 param sqlAdminPassword string
 
+@description('The Object ID of the Azure AD User who will be Grafana Admin')
+param adminObjectId string = '7d295416-442d-4222-9dd8-e734a8110926'
+
 var uniqueVaultName = 'kv-hsync-${take(uniqueString(subscription().subscriptionId, environmentName), 6)}'
 
 // 1. Instantiate the standard tagging module
@@ -67,6 +70,19 @@ module monitoring './modules/monitoring.bicep' = {
     workspaceName: 'law-healthsync-${environmentName}'
     location: location
     tags: tags.outputs.resourceTags
+  }
+}
+
+// 5b. Deploy Azure Managed Observability (Monitor Workspace & Grafana)
+module observability './modules/observability.bicep' = {
+  name: 'observability-deployment'
+  scope: resourceGroup('rg-healthsync-platform-${environmentName}')
+  dependsOn: [
+    rgPlatform
+  ]
+  params: {
+    adminObjectId: adminObjectId
+    location: location
   }
 }
 
