@@ -6,11 +6,11 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/thimanshu756/healthsync.git
-    targetRevision: feature/phase1-core-infra
+    repoURL: 'https://github.com/thimanshu756/healthsync.git'
+    targetRevision: HEAD
     path: platform/charts/frontend
   destination:
-    server: https://kubernetes.default.svc
+    server: 'https://kubernetes.default.svc'
     namespace: frontend
   syncPolicy:
     automated:

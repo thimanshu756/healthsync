@@ -1,15 +1,17 @@
-FROM nginx:1.27-alpine
+# Build stage
+FROM node:18-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
 
-# Copy the dashboard
-COPY index.html /usr/share/nginx/html/index.html
-
-# NGINX config to proxy /health for K8s probes and serve static content
-RUN echo 'server { \
-  listen 80; \
-  root /usr/share/nginx/html; \
-  index index.html; \
-  location /health { return 200 "OK"; add_header Content-Type text/plain; } \
-  location / { try_files $uri $uri/ /index.html; } \
-}' > /etc/nginx/conf.d/default.conf
+# Production stage
+FROM nginx:alpine
+# Copy custom nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy built static assets
+COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

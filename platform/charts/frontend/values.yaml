@@ -2,17 +2,44 @@ replicaCount: 1
 
 image:
   repository: acrhealthsyncdev.azurecr.io/frontend
-  pullPolicy: IfNotPresent
-  tag: "1241d22"
+  pullPolicy: Always
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: "frontend-sa"
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
 
 service:
   type: ClusterIP
   port: 80
 
+ingress:
+  enabled: false
+
 resources:
   requests:
-    cpu: 50m
+    cpu: 10m
     memory: 64Mi
   limits:
     cpu: 100m
     memory: 128Mi
+
+autoscaling:
+  enabled: false
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
